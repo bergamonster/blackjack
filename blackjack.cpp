@@ -201,7 +201,7 @@ int main(){
   char message[10];
   while(cin.getline(message, 10)){
     if (!strcmp(message, "Quit")){
-      break;
+      return 0;
     }
     else if (!strcmp(message, "Hit")){
       cout << endl;
