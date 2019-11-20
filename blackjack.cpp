@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
+#include <sstream>
 
 using namespace std;
 
@@ -17,11 +18,14 @@ void shuffle(vector<int> &cards){
   random_shuffle(cards.begin(), cards.end(), myrandom);
 }
 
-int getValue(int card){
+int getValue(int card, bool real){
   int counter = card/52; // Figure out card in deck
   int deck = card - counter*52;
   counter = deck/13; // Figure out value of card
   int val =  deck - counter*13 + 1;
+  if (real && val > 10){
+    val = 10;
+  }
   return val;
 }
 
@@ -55,7 +59,7 @@ char* getSuit(int card){
 }
 
 void printCard(int card){
-  int val = getValue(card);
+  int val = getValue(card, false);
   if (val == 1){
     cout << "Ace";
   }
@@ -74,6 +78,7 @@ void printCard(int card){
   cout << " of " << getSuit(card) << "s";
 }
 
+//Will need to change this to a function for multiple games
 int main(){
   srand(time(NULL)); // Set seed
   int numDecks = 6;
@@ -132,25 +137,25 @@ int main(){
 
   //Determine Initial Card Values
   for (const auto &card : playerHand){
-    if (getValue(card) == 1){
+    if (getValue(card, false) == 1){
       playerValues.push_back(11); // Set Aces initially to 11
     }
-    else if (getValue(card) > 10){
+    else if (getValue(card, false) > 10){
       playerValues.push_back(10);
     }
     else{
-      playerValues.push_back(getValue(card));
+      playerValues.push_back(getValue(card, false));
     }
   }
   for (const auto &card : dealerHand){
-    if (getValue(card) == 1){
+    if (getValue(card, false) == 1){
       dealerValues.push_back(11); // Set Aces initially to 11
     }
-    else if (getValue(card) > 10){
+    else if (getValue(card, false) > 10){
       dealerValues.push_back(10);
     }
     else{
-      dealerValues.push_back(getValue(card));
+      dealerValues.push_back(getValue(card, false));
     }
   }
 
@@ -172,13 +177,39 @@ int main(){
   printCard(playerHand[0]); 
   cout << endl;
   printCard(playerHand[1]);
-  cout << endl;
-  cout << playerSum << endl;
+  cout << endl << playerSum;
+  cout << endl << endl;
   
-  cout << endl;
-  for (const auto &val : playerValues){
-    cout << val << endl;
+  
+  //Next Cards
+  char message[10];
+  while(cin.getline(message, 10)){
+    if (!strcmp(message, "Quit")){
+      break;
+    }
+    else if (!strcmp(message, "Hit")){
+      int newCard = cards[currentCard++];
+      playerHand.push_back(newCard);
+      playerValues.push_back(getValue(newCard, true));
+      playerSum = getSum(playerValues);
+      printCard(playerHand[playerHand.size()-1]);
+      cout << endl << playerSum << endl << endl;
+      
+      if (playerSum > 21){
+        //check ace
+        cout << "Bust" << endl;
+        break;
+      }
+      
+    }
+    else if (!strcmp(message, "Stand")){
+     // dealer play
+    }
+    else{
+      cout << "Accepted commands are \'Quit\', \'Hit\', and \'Stand\'" << endl;
+    }
   }
+  
   return 0;
 }
 
