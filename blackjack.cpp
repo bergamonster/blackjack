@@ -18,6 +18,15 @@ void shuffle(vector<int> &cards){
   random_shuffle(cards.begin(), cards.end(), myrandom);
 }
 
+int checkAce(vector<int> hand){
+  for (int i = 0; i < hand.size(); ++i){
+    if (hand[i] ==  11){
+      return i;
+    }
+  }
+  return -1;
+}
+
 int getValue(int card, bool real){
   int counter = card/52; // Figure out card in deck
   int deck = card - counter*52;
@@ -25,6 +34,9 @@ int getValue(int card, bool real){
   int val =  deck - counter*13 + 1;
   if (real && val > 10){
     val = 10;
+  }
+  if (real && val == 1){
+    val = 11;
   }
   return val;
 }
@@ -166,10 +178,12 @@ int main(){
   // Begin Game
   
   //Disp Dealer Card
-  cout << "The Dealer Has Been Dealt: " << endl;
+  cout << endl << "The Dealer Has Been Dealt: " << endl;
   //cout << getValue(dealerHand[1]) << endl;
+  printCard(dealerHand[0]);
+  cout << endl << "***";
   printCard(dealerHand[1]);
-  cout << endl << endl;
+  cout << "***" << endl << endl;
   
   //Disp Player Cards
   cout << "Your Cards are:" << endl;
@@ -177,9 +191,11 @@ int main(){
   printCard(playerHand[0]); 
   cout << endl;
   printCard(playerHand[1]);
-  cout << endl << playerSum;
+  cout << endl << "Hand Total: " << playerSum;
   cout << endl << endl;
   
+  bool dealerBust = false;
+  bool playerBust = false;
   
   //Next Cards
   char message[10];
@@ -188,27 +204,90 @@ int main(){
       break;
     }
     else if (!strcmp(message, "Hit")){
+      cout << endl;
       int newCard = cards[currentCard++];
       playerHand.push_back(newCard);
       playerValues.push_back(getValue(newCard, true));
       playerSum = getSum(playerValues);
       printCard(playerHand[playerHand.size()-1]);
-      cout << endl << playerSum << endl << endl;
+      cout << endl;
       
-      if (playerSum > 21){
-        //check ace
+      while (playerSum > 21 && checkAce(playerValues) != -1){
+        //cout << "Would have busted" << endl;
+        int i = checkAce(playerValues);
+        playerValues[i] = 1;
+        playerSum = getSum(playerValues); 
+        }
+      if(playerSum > 21){
+        cout << "Hand Total: " << playerSum << endl << endl;
         cout << "Bust" << endl;
+        playerBust = true;
         break;
       }
-      
+      cout << "Hand Total: " << playerSum << endl << endl;
     }
-    else if (!strcmp(message, "Stand")){
-     // dealer play
+    else if (!strcmp(message, "Stand") || playerSum == 21){
+      while (dealerSum < 17){
+        cout << endl << "Dealer Hits" << endl;
+        int newCard = cards[currentCard++];
+        dealerHand.push_back(newCard);
+        dealerValues.push_back(getValue(newCard, true));
+        dealerSum = getSum(dealerValues);
+        printCard(dealerHand[dealerHand.size()-1]);
+        cout << endl;
+        
+        // Work in dealer having two aces
+        while (dealerSum > 21 && checkAce(playerValues) != -1){
+          //cout << "Would have busted" << endl;
+          int i = checkAce(dealerValues);
+          dealerValues[i] = 1;
+          dealerSum = getSum(dealerValues); 
+        }
+        
+        if(dealerSum > 21){
+          dealerBust = true;
+          cout << "Hand Total: " << dealerSum << endl << endl;
+          cout << "Dealer Busts" << endl << endl;
+          break;
+        }
+        cout << endl << "Hand Total: " << dealerSum << endl << endl;
+      } 
+      break;
     }
     else{
       cout << "Accepted commands are \'Quit\', \'Hit\', and \'Stand\'" << endl;
     }
+    if (dealerBust || playerBust){
+      break;
+    }
   }
+  
+  // Print results
+  cout << "***************************************" << endl << endl;
+  if (playerBust){
+    cout << "Player Busted, Dealer Wins" << endl;
+  }
+  else if (dealerBust){
+    cout << "Dealer Busted, Player Wins" << endl;
+  }
+  else if (dealerSum > playerSum){
+    cout << "Dealer Wins: " << dealerSum << " > " << playerSum << endl;
+  }
+  else if (playerSum > dealerSum){
+    cout << "Player Wins: " << playerSum << " > " << dealerSum << endl;
+  }
+  else { //tie
+    if (playerHand.size() > dealerHand.size()){
+      cout << "Dealer Wins: " << "(Less Cards)" << endl;
+    }
+    else if (dealerHand.size() > playerHand.size()){
+      cout << "Player Wins: " << "(Less Cards)" << endl;
+    }
+    else{ // Same cards
+      cout << "It's a tie!" << endl;
+    }
+  }
+  cout << endl;
   
   return 0;
 }
