@@ -181,9 +181,7 @@ int main(){
   cout << endl << "The Dealer Has Been Dealt: " << endl;
   //cout << getValue(dealerHand[1]) << endl;
   printCard(dealerHand[0]);
-  cout << endl << "***";
-  printCard(dealerHand[1]);
-  cout << "***" << endl << endl;
+  cout << endl << endl;
   
   //Disp Player Cards
   cout << "Your Cards are:" << endl;
@@ -197,9 +195,9 @@ int main(){
   bool dealerBust = false;
   bool playerBust = false;
   
-  //Next Cards
+  //Player's Turn
   char message[10];
-  while(cin.getline(message, 10)){
+  while(playerSum != 21 && cin.getline(message, 5)){
     if (!strcmp(message, "Quit")){
       return 0;
     }
@@ -213,53 +211,64 @@ int main(){
       cout << endl;
       
       while (playerSum > 21 && checkAce(playerValues) != -1){
-        //cout << "Would have busted" << endl;
         int i = checkAce(playerValues);
         playerValues[i] = 1;
         playerSum = getSum(playerValues); 
         }
       if(playerSum > 21){
         cout << "Hand Total: " << playerSum << endl << endl;
-        cout << "Bust" << endl;
+        cout << "Bust" << endl << endl;
         playerBust = true;
         break;
       }
       cout << "Hand Total: " << playerSum << endl << endl;
     }
-    else if (!strcmp(message, "Stand") || playerSum == 21){
-      while (dealerSum < 17){
-        cout << endl << "Dealer Hits" << endl;
-        int newCard = cards[currentCard++];
-        dealerHand.push_back(newCard);
-        dealerValues.push_back(getValue(newCard, true));
-        dealerSum = getSum(dealerValues);
-        printCard(dealerHand[dealerHand.size()-1]);
-        cout << endl;
-        
-        // Work in dealer having two aces
-        while (dealerSum > 21 && checkAce(playerValues) != -1){
-          //cout << "Would have busted" << endl;
-          int i = checkAce(dealerValues);
-          dealerValues[i] = 1;
-          dealerSum = getSum(dealerValues); 
-        }
-        
-        if(dealerSum > 21){
-          dealerBust = true;
-          cout << "Hand Total: " << dealerSum << endl << endl;
-          cout << "Dealer Busts" << endl << endl;
-          break;
-        }
-        cout << endl << "Hand Total: " << dealerSum << endl << endl;
-      } 
+    else if (!strcmp(message, "Stand")){
       break;
     }
     else{
       cout << "Accepted commands are \'Quit\', \'Hit\', and \'Stand\'" << endl;
     }
+    /*
     if (dealerBust || playerBust){
       break;
+    }*/
+  }
+  
+  // Dealer's Turn
+  
+  cout << endl << "Dealer\'s Covered Card: " << endl;
+  printCard(dealerHand[1]);
+  cout << endl << "Hand Total: " << dealerSum << endl<< endl;
+  
+  
+  while (dealerSum < 17 && !playerBust){
+    cout << endl << "Dealer Hits" << endl;
+    int newCard = cards[currentCard++];
+    dealerHand.push_back(newCard);
+    dealerValues.push_back(getValue(newCard, true));
+    dealerSum = getSum(dealerValues);
+    printCard(dealerHand[dealerHand.size()-1]);
+    cout << endl;
+        
+    // Work in dealer having two aces
+    while (dealerSum > 21 && checkAce(playerValues) != -1){
+      int i = checkAce(dealerValues);
+      dealerValues[i] = 1;
+      dealerSum = getSum(dealerValues); 
     }
+        
+    if(dealerSum > 21){
+      dealerBust = true;
+      cout << "Hand Total: " << dealerSum << endl << endl;
+      cout << "Dealer Busts" << endl << endl;
+      break;
+      }
+    cout << "Hand Total: " << dealerSum << endl << endl;
+  } 
+  
+  if (!playerBust && ! dealerBust){
+  cout << "Dealer Stands" << endl << endl;
   }
   
   // Print results
