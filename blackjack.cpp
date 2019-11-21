@@ -1,10 +1,3 @@
-/*
-If you lose, the dealer gets your $100. If you win, you get your original $100 bet back, 
-plus the dealer gives you $100. If you draw (or push) you keep your bet money. And if you 
-get blackjack, you get your original $100 bet back, plus $150 from the dealer because for 
-blackjack, you get 1.5 times your bet.
-*/
-
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -110,7 +103,6 @@ int game(double& wallet){
   vector<int> cards; // Total deck
   vector<int> playerHand; // Exact cards in player hand
   vector<int> dealerHand;  // Exact cards in dealer hand
-  double bet;
   bool blackJack = false;
   
   // Deals with ace value
@@ -128,12 +120,26 @@ int game(double& wallet){
   }
 
   shuffle(cards);
-
-  // Bet
-  cout << "Enter Bet: $";
-  cin >> bet;
-  cin.clear();
-  wallet -= bet; 
+  
+  double bet;
+  string input;
+  cout << "Enter Bet: $"; 
+  getline(cin, input);
+  stringstream ss(input); // Used to make sure input is completely numeric
+  ss >> bet;
+  while (bet <= 0 || !ss.eof() || bet > wallet){
+    ss.str("");  // Clear input
+    ss.clear(); // Reset flags
+    cin.clear();  // Reset flags
+    cout << "Bet Must Be Positive and No More Than Wallet" << endl << "Enter Bet: $";
+    getline(cin, input);
+    ss << input;
+    ss >> bet;
+  }
+  ss.str("");  // Clear input
+  ss.clear();  // Reset flags
+  cin.clear();  // Reset flags
+  wallet -= bet;  // Remove bet from wallet
   
   // Display Wallet
   cout << "Wallet after bet: $" << wallet << endl << endl;
@@ -204,16 +210,19 @@ int game(double& wallet){
     blackJack = true;
   }
   
+  cout << "Accepted Commands are Quit, Hit, and Stand" << endl;
+  
   // Player's Turn
   string message;
   if (!blackJack){ // Auto pass to Dealer turn if blackjack
     cin >> ws;
     while(cin >> message){
+      transform (message.begin(), message.end(), message.begin(), ::tolower);
       cin.clear();
-      if (message == "Quit"){ // Quit from game
+      if (message == "quit"){ // Quit from game
         return 0;
       	}
-      else if (message == "Hit"){
+      else if (message == "hit"){
         cout << endl;
         int newCard = cards[currentCard++];
         playerHand.push_back(newCard);
@@ -235,11 +244,11 @@ int game(double& wallet){
         }
         cout << "Hand Total: " << playerSum << endl << endl;
       }
-      else if (message == "Stand"){
+      else if (message == "stand"){
         break;
       }
       else{
-        cout << "Accepted commands are \'Quit\', \'Hit\', and \'Stand\'" << endl;
+        cout << "Accepted Commands are Quit, Hit, and Stand" << endl;
       }
     }
   }
@@ -315,14 +324,36 @@ int game(double& wallet){
   string play;
   cout << "Play Again? (Y/N): "; // Read in to continue
   cin >> play;
+  transform (play.begin(), play.end(), play.begin(), ::toupper);
+  while (play != "Y" && play != "N"){
+    cin.clear();
+    cout << "Please Enter Y or N: ";
+    cin >> play;
+  }
   cout << endl;
   return (play == "Y");
 }
 
 int main(){
   double wallet;
+  string input;
   cout << "Enter Starting Money: $"; 
-  cin >> wallet;
+  getline(cin, input);
+  stringstream ss(input); // Used to make sure input is completely numeric
+  ss >> wallet;
+  while (wallet <= 0 || !ss.eof()){
+    ss.str("");  // Clear input
+    ss.clear(); // Reset flags
+    cin.clear();  // Reset flags
+    cout << "Starting Money Must Be Positive" << endl << "Enter Starting Money: $";
+    getline(cin, input);
+    ss << input;
+    ss >> wallet;
+  }
+  ss.str("");  // Clear input
+  ss.clear();  // Reset flags
+  cin.clear();  // Reset flags
+  
   bool newGame;
   newGame = game(wallet);
   while (newGame && wallet > 0){ // Wallet must contain money
