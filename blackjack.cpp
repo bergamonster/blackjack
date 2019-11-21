@@ -1,9 +1,17 @@
+/*
+If you lose, the dealer gets your $100. If you win, you get your original $100 bet back, 
+plus the dealer gives you $100. If you draw (or push) you keep your bet money. And if you 
+get blackjack, you get your original $100 bet back, plus $150 from the dealer because for 
+blackjack, you get 1.5 times your bet.
+*/
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
 #include <cstring>
+#include <string>
 #include <sstream>
 
 using namespace std;
@@ -18,6 +26,7 @@ void shuffle(vector<int> &cards){
   random_shuffle(cards.begin(), cards.end(), myrandom);
 }
 
+// Checks hand for an ace that could be changed in value to 1
 int checkAce(vector<int> hand){
   for (int i = 0; i < hand.size(); ++i){
     if (hand[i] ==  11){
@@ -27,6 +36,7 @@ int checkAce(vector<int> hand){
   return -1;
 }
 
+// Gets value of card, A-10, J (11), Q (12), K (13)
 int getValue(int card, bool real){
   int counter = card/52; // Figure out card in deck
   int deck = card - counter*52;
@@ -41,6 +51,7 @@ int getValue(int card, bool real){
   return val;
 }
 
+// Returns sum of cards in hand
 int getSum(vector<int> hand){
   //Factor in 1
   int sum = 0;
@@ -50,6 +61,7 @@ int getSum(vector<int> hand){
   return sum;
 }
 
+// Returns suit of card
 char* getSuit(int card){
   int counter = card/52; // Figure out card in deck
   card = card - counter*52;
@@ -70,6 +82,7 @@ char* getSuit(int card){
   }
 }
 
+// Print function for cards
 void printCard(int card){
   int val = getValue(card, false);
   if (val == 1){
@@ -90,14 +103,15 @@ void printCard(int card){
   cout << " of " << getSuit(card) << "s";
 }
 
-//Will need to change this to a function for multiple games
-int main(){
+// Single round of blackjack
+int game(double& wallet){
   srand(time(NULL)); // Set seed
   int numDecks = 6;
-  int wallet;
   vector<int> cards; // Total deck
   vector<int> playerHand; // Exact cards in player hand
   vector<int> dealerHand;  // Exact cards in dealer hand
+  double bet;
+  bool blackJack = false;
   
   // Deals with ace value
   vector<int> playerValues;  // Values of cards in player hand
@@ -109,37 +123,28 @@ int main(){
   vector<string> dealerSuit;  // Suit of cards in dealer hand
   int currentCard = 0;
 
-
   for (int i = 0; i < numDecks * 52; ++i){ // Creates deck in order
     cards.push_back(i);
   }
 
   shuffle(cards);
-/*
-// Disp Deck
-  for (const auto &card : cards){
-   cout << card << " ";
-  }
-        cout << endl << endl;
-*/
+
+  // Bet
+  cout << "Enter Bet: $";
+  cin >> bet;
+  cin.clear();
+  wallet -= bet; 
+  
+  // Display Wallet
+  cout << "Wallet after bet: $" << wallet << endl << endl;
+  
   // Deal
   playerHand.push_back(cards[currentCard++]);
   dealerHand.push_back(cards[currentCard++]);
   playerHand.push_back(cards[currentCard++]);
   dealerHand.push_back(cards[currentCard++]);
-/*
-  for (const auto &card : playerHand){
-    cout << getValue(card) << " ";
-  }
-  cout << endl;
-
-  for (const auto &card : dealerHand){
-    cout << getValue(card) << " ";
-  }
-  cout << endl;
-*/
   
-  //Determine Suits
+  // Determine Suits
   for (const auto &card : playerHand){
     playerSuit.push_back(getSuit(card));
   }
@@ -147,13 +152,13 @@ int main(){
     dealerSuit.push_back(getSuit(card));
   }
 
-  //Determine Initial Card Values
+  // Determine Initial Card Values
   for (const auto &card : playerHand){
     if (getValue(card, false) == 1){
       playerValues.push_back(11); // Set Aces initially to 11
     }
     else if (getValue(card, false) > 10){
-      playerValues.push_back(10);
+      playerValues.push_back(10); // Set face card value to 10
     }
     else{
       playerValues.push_back(getValue(card, false));
@@ -164,28 +169,28 @@ int main(){
       dealerValues.push_back(11); // Set Aces initially to 11
     }
     else if (getValue(card, false) > 10){
-      dealerValues.push_back(10);
+      dealerValues.push_back(10); // Set face card value to 10
     }
     else{
       dealerValues.push_back(getValue(card, false));
     }
   }
 
-  //Determine Sums
+  // Determine Sums
   playerSum = getSum(playerValues);
   dealerSum = getSum(dealerValues);
 
+  // *******************
   // Begin Game
+  // *******************
   
-  //Disp Dealer Card
+  // Display Dealer Card
   cout << endl << "The Dealer Has Been Dealt: " << endl;
-  //cout << getValue(dealerHand[1]) << endl;
   printCard(dealerHand[0]);
   cout << endl << endl;
   
-  //Disp Player Cards
+  // Display Player Cards
   cout << "Your Cards are:" << endl;
-  //cout << getValue(playerHand[0]) << " " << getValue(playerHand[1]) << endl;
   printCard(playerHand[0]); 
   cout << endl;
   printCard(playerHand[1]);
@@ -195,55 +200,58 @@ int main(){
   bool dealerBust = false;
   bool playerBust = false;
   
-  //Player's Turn
-  char message[10];
-  while(playerSum != 21 && cin.getline(message, 5)){
-    if (!strcmp(message, "Quit")){
-      return 0;
-    }
-    else if (!strcmp(message, "Hit")){
-      cout << endl;
-      int newCard = cards[currentCard++];
-      playerHand.push_back(newCard);
-      playerValues.push_back(getValue(newCard, true));
-      playerSum = getSum(playerValues);
-      printCard(playerHand[playerHand.size()-1]);
-      cout << endl;
+  if(playerSum == 21){
+    blackJack = true;
+  }
+  
+  // Player's Turn
+  string message;
+  if (!blackJack){ // Auto pass to Dealer turn if blackjack
+    cin >> ws;
+    while(cin >> message){
+      cin.clear();
+      if (message == "Quit"){ // Quit from game
+        return 0;
+      	}
+      else if (message == "Hit"){
+        cout << endl;
+        int newCard = cards[currentCard++];
+        playerHand.push_back(newCard);
+        playerValues.push_back(getValue(newCard, true));
+        playerSum = getSum(playerValues);
+        printCard(playerHand[playerHand.size()-1]);
+        cout << endl;
       
-      while (playerSum > 21 && checkAce(playerValues) != -1){
-        int i = checkAce(playerValues);
-        playerValues[i] = 1;
-        playerSum = getSum(playerValues); 
+        while (playerSum > 21 && checkAce(playerValues) != -1){ // Makes sure no Ace values could change
+          int i = checkAce(playerValues);
+          playerValues[i] = 1;
+          playerSum = getSum(playerValues); 
+          }
+        if(playerSum > 21){ // Player Busts
+          cout << "Hand Total: " << playerSum << endl << endl;
+          cout << "Bust" << endl << endl;
+          playerBust = true;
+          break;
         }
-      if(playerSum > 21){
         cout << "Hand Total: " << playerSum << endl << endl;
-        cout << "Bust" << endl << endl;
-        playerBust = true;
+      }
+      else if (message == "Stand"){
         break;
       }
-      cout << "Hand Total: " << playerSum << endl << endl;
+      else{
+        cout << "Accepted commands are \'Quit\', \'Hit\', and \'Stand\'" << endl;
+      }
     }
-    else if (!strcmp(message, "Stand")){
-      break;
-    }
-    else{
-      cout << "Accepted commands are \'Quit\', \'Hit\', and \'Stand\'" << endl;
-    }
-    /*
-    if (dealerBust || playerBust){
-      break;
-    }*/
   }
   
   // Dealer's Turn
-  
   cout << endl << "Dealer\'s Covered Card: " << endl;
-  printCard(dealerHand[1]);
-  cout << endl << "Hand Total: " << dealerSum << endl<< endl;
+  printCard(dealerHand[1]); // Reveal dealer's card
+  cout << endl << "Hand Total: " << dealerSum << endl << endl;
   
   
-  while (dealerSum < 17 && !playerBust){
-    cout << endl << "Dealer Hits" << endl;
+  while (dealerSum < 17 && !playerBust){ // Dealer only hits up to 17 and if the player hasn't busted
+    cout << "Dealer Hits" << endl;
     int newCard = cards[currentCard++];
     dealerHand.push_back(newCard);
     dealerValues.push_back(getValue(newCard, true));
@@ -251,14 +259,13 @@ int main(){
     printCard(dealerHand[dealerHand.size()-1]);
     cout << endl;
         
-    // Work in dealer having two aces
-    while (dealerSum > 21 && checkAce(playerValues) != -1){
+    while (dealerSum > 21 && checkAce(dealerValues) != -1){ // Checks Aces
       int i = checkAce(dealerValues);
       dealerValues[i] = 1;
       dealerSum = getSum(dealerValues); 
     }
         
-    if(dealerSum > 21){
+    if(dealerSum > 21){ // Dealer Busts
       dealerBust = true;
       cout << "Hand Total: " << dealerSum << endl << endl;
       cout << "Dealer Busts" << endl << endl;
@@ -274,30 +281,53 @@ int main(){
   // Print results
   cout << "***************************************" << endl << endl;
   if (playerBust){
-    cout << "Player Busted, Dealer Wins" << endl;
+    cout << "Player Busted, Dealer Wins" << endl; // Bet already removed
   }
   else if (dealerBust){
     cout << "Dealer Busted, Player Wins" << endl;
+    if (blackJack){
+      wallet += bet + 1.5 * bet; // Payout is 1.5x
+    }
+    else{
+      wallet += 2 * bet; // Return bet
+    }
+    
   }
   else if (dealerSum > playerSum){
-    cout << "Dealer Wins: " << dealerSum << " > " << playerSum << endl;
+    cout << "Dealer Wins: " << dealerSum << " > " << playerSum << endl; // Bet already removed
   }
   else if (playerSum > dealerSum){
     cout << "Player Wins: " << playerSum << " > " << dealerSum << endl;
+    if (blackJack){
+      wallet += bet + 1.5 * bet; // Payout is 1.5x
+    }
+    else{
+      wallet += 2*bet; // Return bet
+    }
+    
   }
-  else { //tie
-    if (playerHand.size() > dealerHand.size()){
-      cout << "Dealer Wins: " << "(Less Cards)" << endl;
-    }
-    else if (dealerHand.size() > playerHand.size()){
-      cout << "Player Wins: " << "(Less Cards)" << endl;
-    }
-    else{ // Same cards
+  else { // Tie
       cout << "It's a tie!" << endl;
-    }
+      wallet += bet; // Push
   }
-  cout << endl;
+  cout << endl << "Current Amount in Wallet: $" << wallet << endl << endl;
   
+  string play;
+  cout << "Play Again? (Y/N): "; // Read in to continue
+  cin >> play;
+  cout << endl;
+  return (play == "Y");
+}
+
+int main(){
+  double wallet;
+  cout << "Enter Starting Money: $"; 
+  cin >> wallet;
+  bool newGame;
+  newGame = game(wallet);
+  while (newGame && wallet > 0){ // Wallet must contain money
+    newGame = game(wallet);
+  }
   return 0;
 }
 
