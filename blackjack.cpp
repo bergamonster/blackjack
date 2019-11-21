@@ -499,15 +499,15 @@ int game(double& wallet){
   getline(cin, play); // Get rid of extra input
   cout << "Play Again? (Y/N): "; // Read in to continue
   getline(cin, play);
-  //transform (play.begin(), play.end(), play.begin(), ::toupper);
-  while (play != "Y" && play != "N"){
+  transform (play.begin(), play.end(), play.begin(), ::tolower);
+  while (play != "y" && play != "n"){
     cin.clear();
     cout << "Please Enter Y or N: ";
     getline(cin, play);
   }
   cin.clear();
   cout << endl;
-  return (play == "Y");
+  return (play == "y");
   
 }
 
