@@ -54,24 +54,24 @@ int getSum(vector<int> hand){
   return sum;
 }
 
-// Returns suit of card
-char* getSuit(int card){
+// Returns suit of car
+string getSuit(int card){
   int counter = card/52; // Figure out card in deck
   card = card - counter*52;
   if (card <= 13){
-    return (char*)"Heart";
+    return "Heart";
   }
   else if (card <=26){
-    return (char*)"Diamond";
+    return "Diamond";
   }
   else if (card <=39) {
-    return (char*)"Club";
+    return "Club";
   }
   else if (card <= 52){
-    return (char*)"Spade";
+    return "Spade";
   }
   else{
-    return (char*)"Error";
+    return "Error";
   }
 }
 
