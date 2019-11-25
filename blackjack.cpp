@@ -16,6 +16,23 @@ int myrandom(int i){
   return std::rand()%i;
 }
 
+//Guide to set screen size for optimal graphics
+void setScreen(){
+  string trash;
+  cout << "----------------------------------------------------------------------------------" << endl;
+  for (int i = 0; i < 23; ++i){
+    if (i == 10){
+      cout << "Please set screen size so you can see the above and below lines, then press Enter" << endl;
+    }
+    else{
+      cout << "|" << endl;
+    }
+  }
+  cout << "----------------------------------------------------------------------------------" << endl;
+  getline(cin, trash);
+  cout << string(24, '\n'); // Clear screen
+}
+
 // Randomly shuffles order of deck
 void shuffle(vector<int> &cards){
   random_shuffle(cards.begin(), cards.end(), myrandom);
@@ -31,7 +48,7 @@ int checkAce(vector<int> hand){
   return -1;
 }
 
-// Gets value of card, A-10, J (11), Q (12), K (13)
+// Gets value of card, J (11), Q (12), K (13)
 int getValue(int card, bool real){
   int counter = card/52; // Figure out card in deck
   int deck = card - counter*52;
@@ -56,17 +73,17 @@ int getSum(vector<int> hand){
   return sum;
 }
 
-// Returns suit of card
+// Returns suit of car
 string getSuit(int card){
   int counter = card/52; // Figure out card in deck
   card = card - counter*52;
   if (card < 13){
     return "Heart";
   }
-  else if (card < 26){
+  else if (card <26){
     return "Diamond";
   }
-  else if (card < 39) {
+  else if (card <39) {
     return "Club";
   }
   else if (card < 52){
@@ -209,6 +226,7 @@ void displayHand(vector<int> hand, bool cover){
   cout << line5 << endl << line6 << endl << line7 << endl;
 }
 
+
 // Single round of blackjack
 int game(double& wallet){
   srand(time(NULL)); // Set seed
@@ -216,16 +234,22 @@ int game(double& wallet){
   vector<int> cards; // Total deck
   vector<int> playerHand; // Exact cards in player hand
   vector<int> dealerHand;  // Exact cards in dealer hand
+  vector<int> playerHandSplit; // Exact cards in PLAYER hand if they split
   bool blackJack = false;
+  bool blackJackSplit = false;
   
   // Deals with ace value
   vector<int> playerValues;  // Values of cards in player hand
   vector<int> dealerValues;  // Values of cards in dealer hand
+  vector<int> playerValuesSplit; //Values of cards in case of split
+  
   
   int playerSum;  // Total sum of player hand
   int dealerSum;  // Total sum of dealer hand
+  int playerSumSplit; // Total Sum in case of a split
   vector<string> playerSuit;  // Suit of cards in player hand
   vector<string> dealerSuit;  // Suit of cards in dealer hand
+  vector<string> playerSuitSplit; // Suit of cards in split hand
   int currentCard = 0;
 
   for (int i = 0; i < numDecks * 52; ++i){ // Creates deck in order
@@ -253,17 +277,21 @@ int game(double& wallet){
   ss.str("");  // Clear input
   ss.clear();  // Reset flags
   cin.clear();  // Reset flags
-  
   wallet -= bet;  // Remove bet from wallet
   
+  cout << string(24, '\n'); // Clear screen
+  
   // Display Wallet
-  cout << "Wallet after bet: $" << wallet << endl << endl;
+  cout << "Wallet after bet: $" << wallet << endl;
   
   // Deal
   playerHand.push_back(cards[currentCard++]);
   dealerHand.push_back(cards[currentCard++]);
   playerHand.push_back(cards[currentCard++]);
   dealerHand.push_back(cards[currentCard++]);
+  
+  playerHand.push_back(0);
+  playerHand.push_back(0);
   
   // Determine Suits
   for (const auto &card : playerHand){
@@ -326,12 +354,101 @@ int game(double& wallet){
   
   bool dealerBust = false;
   bool playerBust = false;
+  bool playerBustSplit = false;
   
   if(playerSum == 21){
     blackJack = true;
   }
   
-  cout << "Accepted Commands are Quit, Hit, and Stand" << endl;
+  playerSumSplit=0;
+  // Following if statement Deals with splits
+  string message0;
+   if(getValue(playerHand[1],false) == getValue(playerHand[0],false) && wallet >= bet){
+  	cout << "Would you like to split?" << endl;
+  	cout << "Y/N" << endl;
+  	while(cin >> message0){
+  	    cout << "\n\n";
+  	    transform (message0.begin(), message0.end(), message0.begin(), ::tolower);
+        if (message0 == "y"){ //Split
+        playerHandSplit.push_back(playerHand[1]);
+        playerHand.pop_back();
+        playerHand.push_back(cards[currentCard++]);
+        playerHandSplit.push_back(cards[currentCard++]);
+        playerValues.clear();
+        dealerValues.clear();
+  		// Determine Suits
+  		for (const auto &card : playerHand){
+    		playerSuit.push_back(getSuit(card));
+  		}
+  		for (const auto &card : dealerHand){
+    		dealerSuit.push_back(getSuit(card));
+  		}
+  		for (const auto &card : playerHandSplit) {
+  			playerSuitSplit.push_back(getSuit(card));
+  		}
+		// Determine Initial Card Values
+  		for (const auto &card : playerHand){
+    		if (getValue(card, false) == 1){
+      			playerValues.push_back(11); // Set Aces initially to 11
+    		}
+    		else if (getValue(card, false) > 10){
+      			playerValues.push_back(10); // Set face card value to 10
+    		}
+    		else{
+      			playerValues.push_back(getValue(card, false));
+    		}
+ 		}
+  		for (const auto &card : dealerHand){
+    		if (getValue(card, false) == 1){
+      			dealerValues.push_back(11); // Set Aces initially to 11
+   			}
+    		else if (getValue(card, false) > 10){
+      			dealerValues.push_back(10); // Set face card value to 10
+    		}
+    		else{
+      			dealerValues.push_back(getValue(card, false));
+    		}
+  		}
+  		for (const auto &card : playerHandSplit){
+    		if (getValue(card, false) == 1){
+      			playerValuesSplit.push_back(11); // Set Aces initially to 11
+   			 }
+    		else if (getValue(card, false) > 10){
+      			playerValuesSplit.push_back(10); // Set face card value to 10
+    		}
+   			else{
+      			playerValuesSplit.push_back(getValue(card, false));
+    		}
+  		}
+  	// Determine Sums
+  	playerSum = 0;
+  	dealerSum = 0;
+  	playerSumSplit = 0;
+  	playerSum = getSum(playerValues);
+  	dealerSum = getSum(dealerValues);
+  	playerSumSplit = getSum(playerValuesSplit);
+  		//Print Results
+        cout << "First Hand: " << endl;
+      displayHand(playerHand, false);
+      cout << endl << "Hand Total: " << playerSum << endl << endl;
+    
+      cout << "Second Hand: " << endl;
+      displayHand(playerHandSplit, false);
+      cout << endl << "Hand Total: " << playerSumSplit << endl << endl;
+      cout << "You Will Now Play Your First Hand" << endl;
+      break;
+    	}  	
+        else if (message0 == "n"){
+        cout << string(7, '\n');
+        cout << endl;
+        break;
+        }
+        else{
+        cout << "Please enter either \'Y\' or \'N\' " << endl;
+        }
+}
+}
+    	cout << "(Accepted Commands are Quit, Hit, and Stand)" << endl;
   
   // Player's Turn
   string message;
@@ -344,7 +461,7 @@ int game(double& wallet){
         return 0;
       	}
       else if (message == "hit"){
-        cout << "\n\n\n\n\n\n\n\n\n";
+      	cout << "\n\n\n\n\n\n\n\n\n";
         cout << endl;
         int newCard = cards[currentCard++];
         playerHand.push_back(newCard);
@@ -363,7 +480,6 @@ int game(double& wallet){
         displayHand(playerHand, false);
         
         cout << endl;
-      
         while (playerSum > 21 && checkAce(playerValues) != -1){ // Makes sure no Ace values could change
           int i = checkAce(playerValues);
           playerValues[i] = 1;
@@ -375,16 +491,100 @@ int game(double& wallet){
           playerBust = true;
           break;
         }
+        if (playerSum == 21) {
+        cout << "You Got Blackjack" << endl;
+        break;
+		}
         cout << "Hand Total: " << playerSum << endl << endl;
       }
       else if (message == "stand"){
-        cout << "\n\n\n\n\n\n\n\n\n";
+      	cout << "\n\n\n\n\n\n\n\n\n";
+		break;
+		}
+		else if (message == "quit"){
+        break;
+    	}
+
+      else{
+        cout << "Accepted Commands are Quit, Hit, and Stand" << endl;
+      }
+    }
+  }
+  
+    
+  // Possible Turn for Split
+  if (playerSumSplit >= 2) {
+  	cout << "You Will Now Play Your Second Hand: " << endl;
+  	cout << "Your Second Hand is:" << endl;
+       // Display Player Cards
+  //cout << "Your Hand: " << endl;
+  /*
+  printCard(playerHand[0]); 
+  cout << ", ";
+  printCard(playerHand[1]);
+  cout << endl;
+  */
+  displayHand(playerHandSplit, false);
+  cout << endl << "Hand Total: " << playerSumSplit;
+  cout << string(12, '\n');
+  cout << endl << endl;
+  	
+   string message;
+  if (!blackJackSplit){ // Auto pass to Dealer turn if blackjack
+    cin >> ws;
+    while(cin >> message){
+      transform (message.begin(), message.end(), message.begin(), ::tolower);
+      cin.clear();
+      if (message == "quit"){ // Quit from game
+        return 0;
+      	}
+      else if (message == "hit"){
+      	 cout << "\n\n\n\n\n\n\n\n\n";
+        cout << endl;
+        int newCard = cards[currentCard++];
+        playerHandSplit.push_back(newCard);
+        playerValuesSplit.push_back(getValue(newCard, true));
+        playerSumSplit = getSum(playerValuesSplit);
+        
+        cout << "Dealer\'s Hand: " << endl;
+        displayHand(dealerHand, true);
+        /*
+        cout << endl << endl << "You Were Dealt: " << endl;
+        printCard(playerHand[playerHand.size()-1]);
+        cout << endl;
+        */
+        cout << endl << endl;
+        cout << "Your Hand: " << endl;
+        displayHand(playerHandSplit, false);
+        
+        cout << endl;
+      
+        while (playerSumSplit > 21 && checkAce(playerValuesSplit) != -1){ // Makes sure no Ace values could change
+          int i = checkAce(playerValues);
+          playerValuesSplit[i] = 1;
+          playerSumSplit = getSum(playerValues); 
+          }
+        if(playerSumSplit > 21){ // Player Busts
+          cout << "Hand Total: " << playerSumSplit << endl << endl;
+          cout << "Bust" << endl << endl;
+          playerBustSplit = true;
+          break;
+        }
+        if (playerSumSplit == 21){
+        	cout << "You Got Blackjack" << endl;
+        	break;
+		}
+        cout << "Hand Total: " << playerSumSplit << endl << endl;
+      }
+      else if (message == "stand"){
+      	cout << "\n\n\n\n\n\n\n\n\n";
         break;
       }
       else{
         cout << "Accepted Commands are Quit, Hit, and Stand" << endl;
       }
     }
+  }  	
   }
   
   // Dealer's Turn
@@ -454,11 +654,12 @@ int game(double& wallet){
     cout << endl << "Hand Total: " << playerSum << endl << endl;
   }
   
-  this_thread::sleep_for (chrono::seconds(1)); // Pause before results
+  this_thread::sleep_for (chrono::seconds(2)); // Pause before results
   
-  // Print results
-  cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-  cout << "***************************************" << endl << endl;
+  if (playerSumSplit < 2){
+   // Print results
+   cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+  //cout << "***************************************" << endl << endl;
   if (playerBust){
     cout << "Player Busted, Dealer Wins" << endl; // Bet already removed
   }
@@ -490,9 +691,85 @@ int game(double& wallet){
       wallet += bet; // Push
   }
   cout << endl << "Current Amount in Wallet: $" << wallet << endl << endl;
+  cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+}
+
+
+
+else if (playerSumSplit >= 2){
+	//Print Results for split
+	cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+if (playerBust){
+    cout << "Player Busted Hand 1, Dealer Wins Half of Bet" << endl; // Bet already removed
+  }
+if (playerBustSplit){
+cout << "Player Split Busted, Dealer Wins Half of Bet" << endl; // Bet already removed
+}
+if (dealerBust){
+	if (!playerBust && !playerBustSplit){
+	cout << "Dealer Busted, Player Wins" << endl;
+		if (blackJack){
+			wallet += bet + .75 * bet; // Payout is 1.5x
+		}
+		if (blackJackSplit){
+			wallet += bet + 0.75*bet;
+		}
+		if (!blackJack && !blackJackSplit){
+			wallet += 2 * bet; // Return bet
+		}
+	}
+	else if (playerBust && playerBustSplit){
+		cout << "Everyone Busted" << endl;}
+	else if (playerBust || playerBustSplit){
+		cout << "Dealer Busted, ";
+		if (playerBust){
+			cout << "Player Split wins";
+		}
+		if (playerBustSplit){
+			cout << "Player Hand 1 wins";
+		}
+		
+	}
+}
+if (dealerSum > playerSum && !dealerBust){
+    cout << "Dealer Wins against Hand 1: " << dealerSum << " > " << playerSum << endl; // Bet already removed
+  }
+else if (playerSum > dealerSum && !playerBust){
+cout << "Player Wins with Hand 1: " << playerSum << " > " << dealerSum << endl;
+    if (blackJack){
+      wallet += bet + .75 * bet; // Payout is 1.5x
+    }
+    else{
+      wallet += bet; // Return bet
+}
+}
+
+if (dealerSum > playerSumSplit && !dealerBust){
+    cout << "Dealer Wins against Hand 2: " << dealerSum << " > " << playerSumSplit << endl; // Bet already removed
+  }
+else if (playerSumSplit > dealerSum && !playerBustSplit){
+cout << "Player Wins with Hand 2: " << playerSumSplit << " > " << dealerSum << endl;
+    if (blackJackSplit){
+      wallet += bet + .75 * bet; // Payout is 1.5x
+    }
+    else{
+      wallet += bet; // Return bet
+}
+}
+  if (playerSum == dealerSum && !dealerBust) { // Tie
+      cout << "It's a tie! (Hand 1)" << endl;
+      wallet += bet; // Push
+  }
+  if (playerSumSplit == dealerSum && !dealerBust){ // Tie
+      cout << "It's a tie! (Hand 2)" << endl;
+      wallet += bet; // Push
+  }
+  cout << endl << "Current Amount in Wallet: $" << wallet << endl << endl;
   cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
   
-   
+}	
+	
+
   string play;
   string trash;
   cout << "";
@@ -512,6 +789,7 @@ int game(double& wallet){
 }
 
 int main(){
+  setScreen();
   double wallet;
   string input;
   cout << "Enter Starting Money: $"; 
@@ -538,17 +816,3 @@ int main(){
   }
   return 0;
 }
-
-
-/*
-   * Old syntax.
-   *
-  for (int i = 0; i < words.size(); ++i){
-    cout << words[i] << endl;
-  }
-
-  // Ranged-for syntax
-  for (const string &temp : words){
-    cout << temp << endl;
-  }
-  */
