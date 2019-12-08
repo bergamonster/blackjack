@@ -289,10 +289,10 @@ int game(double& wallet){
   dealerHand.push_back(cards[currentCard++]);
   playerHand.push_back(cards[currentCard++]);
   dealerHand.push_back(cards[currentCard++]);
-  
+  /*
   playerHand.push_back(0);
   playerHand.push_back(0);
-  
+  */
   // Determine Suits
   for (const auto &card : playerHand){
     playerSuit.push_back(getSuit(card));
@@ -774,7 +774,13 @@ cout << "Player Wins with Hand 2: " << playerSumSplit << " > " << dealerSum << e
   string trash;
   cout << "";
   getline(cin, play); // Get rid of extra input
+    if (wallet > 0){
   cout << "Play Again? (Y/N): "; // Read in to continue
+  }
+  else {
+  cout << "End of Game, Wallet Empty" << endl;
+  return 0;
+  }
   getline(cin, play);
   transform (play.begin(), play.end(), play.begin(), ::tolower);
   while (play != "y" && play != "n"){
